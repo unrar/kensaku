@@ -1,0 +1,23 @@
+#---------------------
+# Config file for Kensaku
+#---------------------
+
+### identification
+identification:
+  # Replace with your username
+  username: "tests-dude"
+  # Replace with your provider
+  provider: "bobo"
+  # Replace with your provider's public public-key
+  public-key: "203953907HC09Y320HS2SFOIHW4BOBO" 
+  # Replace with your private public-key
+  private-key: "4059U32094YH0DSNFC09PW3HRHIN0C893EGBHF0OG" 
+
+### folders
+folders:
+  # Folder where the contents will be hosted
+  root: "/opt/lampp/htdocs/kensakuapp" 
+  # Replace mytest with your username
+  mirror: "http://mytest.kensaku.com" 
+  # If you have a folder with extra config, place it here
+  extra: "/home/mytest/k.d" 

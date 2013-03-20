@@ -1,0 +1,118 @@
+#!/usr/bin/python3
+
+import sys, os, yaml
+from sys import argv
+## Config path
+cpath = "/home/afm/khalin/conf/kensaku.yaml"
+sfile = ".kensaku/solutions.yaml"
+##### PARSE kensaku.yaml #####
+if not os.path.isfile(cpath):
+  print("Configuration file couldn't be found!")
+  exit()
+else:
+  ## parse here ##
+  print("Configuration parsed successfully.")
+
+if len(sys.argv) < 2:
+  print("Incorrect usage. For help, type kensaku -h")
+  exit()
+
+if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+  print("Kensaku is the tool to manage your KensakuApp server.")
+  print("To connect to your server, type\tkensaku connect servername")
+  print("To get your key, type\tkensaku getkey")
+  print("To push the changes to server, type\tkensaku push") 
+  print("To add a relation, type\t kensaku add-relation origin solution")
+  print("To bootstrap, type\tkensaku bootstrap")
+  print("To deploy a solution, type\tkensaku deploy solution")
+  print("To view Kensaku's status, type\tkensaku status")
+elif sys.argv[1] == "status":
+  with open(sfile, 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Get the loaded solutions
+  loadedSolutions = cf["solutions"]["active"]
+  print("The following solutions are deployed: " + loadedSolutions)
+  print("The following relations are active: ")
+  with open(".kensaku/relations", 'r') as f:
+    d = f.read()
+    print(d)
+    f.close()
+elif sys.argv[1] == "deploy":
+  if len(sys.argv) < 3:
+    print("Incorrect usage. Use kensaku deploy solution")
+  else:
+    # Open the config file
+    if not os.path.isfile(sfile):
+      print("solutions.yaml couldn't be found!")
+      exit()
+    with open(sfile, 'r') as f:
+      cf = yaml.load(f)
+      f.close()
+    # Get the loaded solutions
+    loadedSolutions = cf["solutions"]["active"]
+    ploadedSolutions = loadedSolutions.split(",")
+    for solution in ploadedSolutions:
+      if solution.lower() == argv[2]:
+        print("The solution is already loaded!")
+        exit()
+    nval = dict(
+      solutions = dict(
+        active = loadedSolutions + "," + argv[2]
+      )
+    )
+    with open(sfile, 'w') as outfile:
+      outfile.write( yaml.dump(nval, default_flow_style=False))
+      outfile.close()
+    if argv[2] == "wordpress":
+      print("Installing Wordpress to the server...")
+      os.system("cp -R ~/khalin/solutions/wordpress wordpress")
+      print("Wordpress installed correctly in wordpress/!")
+    print("Success! The solution " + argv[2] + " has been deployed.")
+elif sys.argv[1] == "getkey":
+  print("Your key to set up your subdomain/folder is: natoar23ae")
+elif sys.argv[1] == "push":
+  print("Changes pushed to the server!")
+elif sys.argv[1] == "bootstrap":
+  print("Bootstrapping...")
+  os.system("touch README")
+  os.system("mkdir .kensaku")
+  os.system("cp ~/khalin/conf/solutions.yaml .kensaku/solutions.yaml")
+  os.system("touch .kensaku/sconf.yaml")
+  os.system("touch .kensaku/relations")
+  print("Bootstrapped correctly!")
+elif sys.argv[1] == "add-relation":
+  if len(sys.argv) < 4:
+    print("Incorrect usage. For help, type kensaku -h")
+  else:
+    with open(".kensaku/solutions.yaml", 'r') as f:
+      cf = yaml.load(f)
+      f.close()
+    tlist = cf["solutions"]["active"]
+    slist = tlist.split(",")
+    isFoundA = False
+    isFoundB = False
+    for sol in slist:
+      if sol == argv[2]:
+        isFoundA = True
+      if sol == argv[3]:
+        isFoundB = True
+    if isFoundA != True:
+      print("The origin solution " + argv[2] + " isn't loaded. Deploy it with kensaku deploy " + argv[2])
+      exit()
+    if isFoundB != True:
+      print("The solution " + argv[3] + " isn't loaded. Deploy it with kensaku deploy " + argv[3])
+      exit()
+    os.system("echo \"" + sys.argv[2] + " ~> " + sys.argv[3] + "\" >> .kensaku/relations")
+    print("A relation between " + sys.argv[2] + " and " + sys.argv[3] + " has been added.")
+elif sys.argv[1] == "connect":
+  if len(sys.argv) < 3:
+    print("Incorrect usage. For help, type kensaku -h")
+  else:
+    if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]):
+      os.system("cd /opt/lampp/htdocs/kensakuapp/" + sys.argv[2])
+      print("Connected successfully!")
+    else:
+      print("The server doesn't exist!")
+else:
+  print("Incorrect usage. For help, type kensaku -h")
