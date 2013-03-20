@@ -64,6 +64,14 @@ elif sys.argv[1] == "deploy":
     with open(sfile, 'w') as outfile:
       outfile.write( yaml.dump(nval, default_flow_style=False))
       outfile.close()
+      
+    # NodeServer
+    if argv[2] == "nodeserver":
+      print("Installing Nodeserver...")
+      os.system("cp -R ~/khalin/solutions/nodeserver .")
+      print("Nodeserver installed correctly!")
+    
+    # Wordpress
     if argv[2] == "wordpress":
       print("Installing Wordpress to the server...")
       os.system("cp -R ~/khalin/solutions/wordpress wordpress")
@@ -109,8 +117,7 @@ elif sys.argv[1] == "connect":
   if len(sys.argv) < 3:
     print("Incorrect usage. For help, type kensaku -h")
   else:
-    if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]):
-      os.system("cd /opt/lampp/htdocs/kensakuapp/" + sys.argv[2])
+    if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]) or os.path.exists("/home/afm/kensaku/" + argv[2]):
       print("Connected successfully!")
     else:
       print("The server doesn't exist!")
