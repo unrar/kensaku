@@ -2,6 +2,7 @@
 
 import sys, os, yaml
 from sys import argv
+from getpass import getpass
 ## Config path
 cpath = "/home/afm/khalin/conf/kensaku.yaml"
 sfile = ".kensaku/solutions.yaml"
@@ -20,12 +21,32 @@ if len(sys.argv) < 2:
 if sys.argv[1] == "-h" or sys.argv[1] == "--help":
   print("Kensaku is the tool to manage your KensakuApp server.")
   print("To connect to your server, type\tkensaku connect servername")
-  print("To get your key, type\tkensaku getkey")
-  print("To push the changes to server, type\tkensaku push") 
-  print("To add a relation, type\t kensaku add-relation origin solution")
-  print("To bootstrap, type\tkensaku bootstrap")
+  print("To get your key, type\t\tkensaku getkey")
+  print("To push the changes, type\tkensaku push") 
+  print("To add a relation, type\t\tkensaku add-relation origin solution")
+  print("To bootstrap, type\t\tkensaku bootstrap")
   print("To deploy a solution, type\tkensaku deploy solution")
   print("To view Kensaku's status, type\tkensaku status")
+  print("To add a local domain, type\tkensaku add-local-domain domain.com")
+  print("To edit the config, type\tkensaku sconf")
+elif sys.argv[1] == "sconf":
+  print("Opening solution's config file...")
+  os.system("nano .kensaku/sconf.yaml")
+elif sys.argv[1] == "node":
+  if len(argv) < 3:
+    print("Wrong syntax. Use: kensaku node file.js")
+    exit()
+  print("Running nodejs...")
+  os.system("node " + argv[2])
+elif sys.argv[1] == "add-local-domain":
+  if len(argv) < 3:
+    print("Wrong syntax. Use: kensaku add-local-domain domain.com")
+    exit()
+  print("Attempting to add the domain " + argv[2] + " to /etc/hosts...")
+  spwd = getpass()
+  os.system("echo " + spwd + " | sudo -S sed -i '$ a 127.0.0.1 " + argv[2] + "' /etc/hosts")
+  print("Correctly added the domain. Tailing /etc/hosts for a manual check...")
+  os.system("tail /etc/hosts")
 elif sys.argv[1] == "status":
   with open(sfile, 'r') as f:
     cf = yaml.load(f)

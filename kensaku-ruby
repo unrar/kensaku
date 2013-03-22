@@ -1,0 +1,8 @@
+#!/usr/bin/ruby
+
+##################
+# Config files   #
+##################
+
+cpath = "~/khalin/conf/kensaku.yaml"
+sfile = ".kensaku/solutions.yaml"

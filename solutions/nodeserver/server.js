@@ -1,8 +1,8 @@
 // BEGIN CONFIG
-c2url = "http://cloudium-a1a.khalin.com/"; //URL to your C2 machine (remember to NOT include the *arguments* [username, type])
-c2user = "catbuntu";
-c2pwd = "katpass";
-c2plan = "private";
+c2url = "http://cloudium-kensaku.khalin.com"; //URL to your C2 machine (remember to NOT include the *arguments* [username, type])
+c2user = "afm";
+c2pwd = "natoar23ae";
+c2plan = "paas";
 c2full = c2url + " " + c2user + " " + c2plan;
 // Welcome message
 console.log("Welcome to NodeServer v0.1a-c2.");
@@ -36,6 +36,7 @@ var server = http.createServer(function(req,res) {
 server.listen(8080);
 console.log("NodeServer   Start				[OK  ]");
 console.log("NodeServer  Listen 				[8080]");
+console.log("NodeServer   Visit       " + c2url + ":8080");
 
 // These functions write the main HTML structure.
 
@@ -52,3 +53,4 @@ function startHTML (o, title, font) {
 function endHTML (o) {
 	o.end("</body>\n</html>");
 }
+

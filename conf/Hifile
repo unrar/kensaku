@@ -1,0 +1,14 @@
+#!/bin/bash
+
+##################################################
+#         COMMANDS TO TEST IN KENSAKU            #
+##################################################
+
+###### Bootstrap Commands — Setup a Kensaku environment. Remove after first test!
+kensaku bootstrap
+
+###### Boot Commands — Show Kensaku's status by default.
+kensaku status
+
+###### Tests — Add your commands to test here
+echo "Testing..."
