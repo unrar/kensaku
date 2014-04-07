@@ -3,16 +3,18 @@
 import sys, os, yaml
 from sys import argv
 from getpass import getpass
+
 ## Config path
-cpath = "/home/afm/khalin/conf/kensaku.yaml"
+cpath = os.path.expanduser("~") + "/khalin/conf/kensaku.yaml"
 sfile = ".kensaku/solutions.yaml"
+
 ##### PARSE kensaku.yaml #####
 if not os.path.isfile(cpath):
   print("Configuration file couldn't be found!")
   exit()
-else:
+#else:
   ## parse here ##
-  print("Configuration parsed successfully.")
+  #print("Configuration parsed successfully.")
 
 if len(sys.argv) < 2:
   print("Incorrect usage. For help, type kensaku -h")
@@ -31,7 +33,7 @@ if sys.argv[1] == "-h" or sys.argv[1] == "--help":
   print("To edit the config, type\tkensaku sconf")
 elif sys.argv[1] == "sconf":
   print("Opening solution's config file...")
-  os.system("nano .kensaku/sconf.yaml")
+  os.system("nano " + sfile)
 elif sys.argv[1] == "node":
   if len(argv) < 3:
     print("Wrong syntax. Use: kensaku node file.js")
@@ -138,7 +140,7 @@ elif sys.argv[1] == "connect":
   if len(sys.argv) < 3:
     print("Incorrect usage. For help, type kensaku -h")
   else:
-    if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]) or os.path.exists("/home/afm/kensaku/" + argv[2]):
+    if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]) or os.path.exists(os.path.expanduser("~") + "/kensaku/" + argv[2]):
       print("Connected successfully!")
     else:
       print("The server doesn't exist!")

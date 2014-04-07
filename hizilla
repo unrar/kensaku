@@ -1,34 +1,203 @@
-#!/usr/bin/ruby
+#!/usr/bin/python3
+import sys, os, yaml
+import os.path, filecmp
+from random import randrange
+from getpass import getpass
 
+### COMPARE TWO DIRECTORIES ###
+def cmp_dirs(dir1, dir2):
+    """
+    Compare two directories recursively. Files in each directory are
+    assumed to be equal if their names and contents are equal.
+
+    @param dir1: First directory path
+    @param dir2: Second directory path
+
+    @return: True if the directory trees are the same and 
+        there were no errors while accessing the directories or files, 
+        False otherwise.
+   """
+    if (not os.path.isdir(dir1)) or (not os.path.isdir(dir2)):
+        print("Internal Error: The directory doesn't exist.")
+        exit()
+    dirs_cmp = filecmp.dircmp(dir1, dir2)
+    if len(dirs_cmp.left_only)>0 or len(dirs_cmp.right_only)>0 or \
+        len(dirs_cmp.funny_files)>0:
+        return False
+    (_, mismatch, errors) =  filecmp.cmpfiles(
+        dir1, dir2, dirs_cmp.common_files, shallow=False)
+    if len(mismatch)>0 or len(errors)>0:
+        return False
+    for common_dir in dirs_cmp.common_dirs:
+        new_dir1 = os.path.join(dir1, common_dir)
+        new_dir2 = os.path.join(dir2, common_dir)
+        if not cmp_dirs(new_dir1, new_dir2):
+            return False
+    return True
+    
 ### Run the boostrap
 
-if ARGV.length < 1 then
-  puts "Please, use hizilla -h."
-  exit
-end
+if len(sys.argv) < 2:
+  print("Please, use hizilla -h.")
+  exit()
 
-if ARGV[0] == "test" then
-  puts "Running test commands..."
-  system("./Hifile")
-elsif ARGV[0] == "bootstrap"
-  puts "Copying bootstrap files..."
-  puts "Copying default Hifile..."
-  system("cp /home/afm/khalin/conf/Hifile Hifile")
-  puts "Hifile copied correctly!"
-  puts "Bootstrap ended."
-elsif ARGV[0] == "instance"
-  puts "Randomizing instance name..."
-  iname = rand(1 + 1000)
-  if File.directory? '/home/afm/kensaku/hizilla-v01-t' + iname.to_s then
-    puts "Randomized name already exists. Try it again..."
-  else
-    puts "Randomized instance name " + iname.to_s + ". Creating directory..."
-    system("mkdir /home/afm/kensaku/hizilla-v01-t" + iname.to_s)
-    puts "Instance created correctly!"
-  end
-else
-  puts "Commands for Hizilla: "
-  puts "hizilla bootstrap\tCreates a default Hifile and other config files."
-  puts "hizilla test\tRuns the test specified in the Hifile."
-  puts "hizilla instance\tCreates a new insteance inside the ~/kensaku directory."
-end
+if sys.argv[1] == "test":
+  print("Running test commands...")
+  os.system("./Hifile")
+  
+elif sys.argv[1] == "bootstrap":
+  print("Copying bootstrap files...")
+  print("Copying default Hifile...")
+  os.system("cp " + os.path.expanduser("~") + "/khalin/conf/Hifile Hifile")
+  print("Hifile copied correctly!")
+  print("Creating empty config file... [hizilla.yaml]")
+  os.system("touch hizilla.yaml")
+  print("Config file created!")
+  print("Writing default config...")   
+  nval = dict(
+    config = dict(
+      kensakuapp = "None"
+    )
+  )
+  with open("hizilla.yaml", 'w') as outfile:
+    outfile.write( yaml.dump(nval, default_flow_style=False))
+    outfile.close()
+  print("Config written.")  
+  print("Bootstrap ended.")
+  
+elif sys.argv[1] == "instance":
+  print("Randomizing instance name...")
+  iname = randrange(10000)
+  if os.path.isdir(os.path.expanduser("~") + "/kensaku/hizilla-v01-t" + str(iname)):
+    print("Randomized name already exists. Try it again...")
+  else:
+    print("Randomized instance name " + str(iname) + ". Creating directory...")
+    os.system("mkdir " + os.path.expanduser("~") + "/kensaku/hizilla-v01-t" + str(iname))
+    print("Instance created correctly!")
+    
+elif sys.argv[1] == "link":
+  # Start Troubleshoting
+  if len(sys.argv) < 3:
+      print("Syntax error: hizilla link [kensakuapp-name]")
+      exit()
+  if not os.path.exists("hizilla.yaml"):
+      print("Config file not found - Bootstrap again (make sure to backup your existing files).")
+      exit()
+  # Open config file
+  with open("hizilla.yaml", 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Check if it's already linked
+  kapp = cf["config"]["kensakuapp"]
+  if not kapp == "None":
+    print("This instance is already linked to the KensakuApp " + kapp)
+  else:
+    # See if the kensakuapp exists
+    if not os.path.isdir("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]):
+      print("The specified kensakuapp wasn't found in the KC2 server.")
+      exit()
+    # Link it
+    ## Let's try to write it to the httpd-vhosts.conf file with sed
+    spwd = getpass()
+    os.system("echo " + spwd + " | sudo -S sed -i \"$ a <VirtualHost *:80>\\nServerAdmin kdmin@kensakuapp.com\\nDocumentRoot /opt/lampp/htdocs/kensakuapp/" + sys.argv[2] + "\\nServerName " + sys.argv[2] + ".kensakuapp.com\\n</VirtualHost>\" /opt/lampp/etc/extra/httpd-vhosts.conf")
+    cf["config"]["kensakuapp"] = sys.argv[2]
+    out = open("hizilla.yaml", 'w')
+    yaml.dump(cf,out,default_flow_style=False)
+    out.close()
+    print("Successfully linked! Please run: kensaku add-local-domain " + sys.argv[2] + ".kensakuapp.com")
+
+elif sys.argv[1] == "sync":
+  # Start Troubleshoting
+  if not os.path.exists("hizilla.yaml"):
+      print("Config file not found - Bootstrap again (make sure to backup your existing files).")
+      exit()
+  # Open config file
+  with open("hizilla.yaml", 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Check if it's linked
+  kapp = cf["config"]["kensakuapp"]
+  # KensakuApp Path
+  kapath = "/opt/lampp/htdocs/kensakuapp/" + kapp
+  if kapp == "None":
+    print("This instance is NOT linked to any KensakuApp yet. Run: hizilla link [kensakuapp-name]")
+    exit()
+  print("Attempting to sync with " + kapp + "...")
+  # Compare directories
+  if cmp_dirs(".", kapath):
+    print("The app is already synced.")
+  else:
+    # Copy
+    print("Attempting to sync...")
+    print("Checking if server is empty...")
+    if os.listdir(kapath):
+      print("Server is not empty! Removing all the contents...")
+      os.system("rm -R " + kapath + "/*")
+    else:
+      print("The server is empty!")
+    print("Copying files...")
+    os.system("cp -R . " + kapath)
+    print("Synced!")
+
+elif sys.argv[1] == "syncback":
+  # Start Troubleshoting
+  if not os.path.exists("hizilla.yaml"):
+      print("Config file not found - Bootstrap again (make sure to backup your existing files).")
+      exit()
+  # Open config file
+  with open("hizilla.yaml", 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Check if it's linked
+  kapp = cf["config"]["kensakuapp"]
+  # KensakuApp Path
+  kapath = "/opt/lampp/htdocs/kensakuapp/" + kapp
+  if kapp == "None":
+    print("This instance is NOT linked to any KensakuApp yet. Run: hizilla link [kensakuapp-name]")
+    exit()
+  print("Attempting to sync back to " + kapp + "...")
+  # Compare directories
+  if cmp_dirs(".", kapath):
+    print("The app is already synced.")
+  else:
+    os.system("rm -R ./*")
+    print("Copying files...")
+    os.system("cp -R " + kapath + "/* .")
+    print("Synced!")
+
+elif sys.argv[1] == "add-custom-domain":
+  if len(sys.argv) < 3:
+    print("Syntax error: hizilla add-custom-domain [my.domain.com]")
+    exit()
+  if not os.path.exists("hizilla.yaml"):
+      print("Config file not found - Bootstrap again (make sure to backup your existing files).")
+      exit()
+  # Open config file
+  with open("hizilla.yaml", 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Check if it's linked
+  kapp = cf["config"]["kensakuapp"]
+  # KensakuApp Path
+  if kapp == "None":
+    print("This instance is NOT linked to any KensakuApp yet. Run: hizilla link [kensakuapp-name]")
+    exit()
+  print("Attempting to add the custom domain to your KensakuApp...")
+  spwd = getpass()
+  os.system("echo " + spwd + " | sudo -S sed -i \"/ServerName " + kapp + "/a ServerAlias " + sys.argv[2] + "\" /opt/lampp/etc/extra/httpd-vhosts.conf")
+  print("Custom domain added! Please run: kensaku add-local-domain " + sys.argv[2])
+
+     
+    
+else:
+  print("Commands for Hizilla: ")
+  print("hizilla bootstrap\tCreates a default Hifile and other config files.")
+  print("hizilla test\tRuns the test specified in the Hifile.")
+  print("hizilla instance\tCreates a new insteance inside the ~/kensaku directory.")
+  print("hizilla link [kensakuapp-name]\tLinks the instance to a KensakuApp KC2 cloud.")
+  print("hizilla sync\tSyncs the contents in the instance to the linked KensakuApp.")
+  print("hizilla syncback\tSyncs the contents in the linked KensakuApp to the current folder.")
+  print("hizilla add-custom-domain [my.domain.com]\tAdds a custom domain to the linked KensakuApp.")
+
+
+
