@@ -22,8 +22,7 @@ if len(sys.argv) < 2:
 
 if sys.argv[1] == "-h" or sys.argv[1] == "--help":
   print("Kensaku is the tool to manage your KensakuApp server.")
-  print("To connect to your server, type\tkensaku connect servername")
-  print("To get your key, type\t\tkensaku getkey")
+  print("To create an app, type\t\tkensaku create appname")
   print("To push the changes, type\tkensaku push") 
   print("To add a relation, type\t\tkensaku add-relation origin solution")
   print("To bootstrap, type\t\tkensaku bootstrap")
@@ -136,6 +135,7 @@ elif sys.argv[1] == "add-relation":
       exit()
     os.system("echo \"" + sys.argv[2] + " ~> " + sys.argv[3] + "\" >> .kensaku/relations")
     print("A relation between " + sys.argv[2] + " and " + sys.argv[3] + " has been added.")
+    
 elif sys.argv[1] == "connect":
   if len(sys.argv) < 3:
     print("Incorrect usage. For help, type kensaku -h")
@@ -144,5 +144,27 @@ elif sys.argv[1] == "connect":
       print("Connected successfully!")
     else:
       print("The server doesn't exist!")
+      
+## CREATE AN APP ##
+elif sys.argv[1] == "create":
+  if len(sys.argv) < 3:
+    print("Syntax error: kensaku create appname")
+    exit()
+  if sys.argv[2].lower() == "none":
+    print("The app can't be named None.")
+    exit()
+  if os.path.exists("/opt/lampp/htdocs/kensakuapp/" + sys.argv[2]):
+    print("The app " + sys.argv[2] + " already exists. Aborting...")
+  else:
+    
+    os.system("mkdir /opt/lampp/htdocs/kensakuapp/" + sys.argv[2])
+    print("Creating " + sys.argv[2] + "...", end=" ")
+    ## Let's try to write it to the httpd-vhosts.conf file with sed
+    spwd = getpass()
+    os.system("echo " + spwd + " | sudo -S sed -i \"$ a <VirtualHost *:80>\\nServerAdmin kdmin@kensakuapp.com\\nDocumentRoot /opt/lampp/htdocs/kensakuapp/" + sys.argv[2] + "\\nServerName " + sys.argv[2] + ".kensakuapp.com\\n</VirtualHost>\" /opt/lampp/etc/extra/httpd-vhosts.conf")
+    # Done!
+    print("done")
+    print("http://" + sys.argv[2] + ".kensakuapp.com/ | hizilla link " + sys.argv[2]) 
+
 else:
   print("Incorrect usage. For help, type kensaku -h")

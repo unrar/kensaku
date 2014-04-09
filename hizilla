@@ -41,9 +41,32 @@ if len(sys.argv) < 2:
   print("Please, use hizilla -h.")
   exit()
 
-if sys.argv[1] == "test":
+if sys.argv[1] == "run":
+  # Start Troubleshoting
+  if not os.path.exists("hizilla.yaml"):
+      print("Config file not found - Bootstrap again (make sure to backup your existing files).")
+      exit()
+  # Open config file
+  with open("hizilla.yaml", 'r') as f:
+    cf = yaml.load(f)
+    f.close()
+  # Check if it's linked
+  kapp = cf["config"]["kensakuapp"]
+  # KensakuApp Path
+  kapath = "/opt/lampp/htdocs/kensakuapp/" + kapp
+  if kapp == "None":
+    print("This instance is NOT linked to any KensakuApp yet. Run: hizilla link [kensakuapp-name]")
+    exit()
+
   print("Running test commands...")
-  os.system("./Hifile")
+  print("")
+  
+  # Copy the Hifile 
+  new_hifile = kapath + "/Hifile"
+  if os.path.exists(new_hifile):
+    os.system("rm " + new_hifile)
+  os.system("cp Hifile " + new_hifile)
+  os.system("bash " + new_hifile)
   
 elif sys.argv[1] == "bootstrap":
   print("Copying bootstrap files...")
@@ -97,15 +120,16 @@ elif sys.argv[1] == "link":
       print("The specified kensakuapp wasn't found in the KC2 server.")
       exit()
     # Link it
-    ## Let's try to write it to the httpd-vhosts.conf file with sed
-    spwd = getpass()
-    os.system("echo " + spwd + " | sudo -S sed -i \"$ a <VirtualHost *:80>\\nServerAdmin kdmin@kensakuapp.com\\nDocumentRoot /opt/lampp/htdocs/kensakuapp/" + sys.argv[2] + "\\nServerName " + sys.argv[2] + ".kensakuapp.com\\n</VirtualHost>\" /opt/lampp/etc/extra/httpd-vhosts.conf")
+    ## THIS CODE IS NOW ON KENSAKU CREATE
+    #spwd = getpass()
+    #os.system("echo " + spwd + " | sudo -S sed -i \"$ a <VirtualHost *:80>\\nServerAdmin kdmin@kensakuapp.com\\nDocumentRoot /opt/lampp/htdocs/kensakuapp/" + sys.argv[2] + "\\nServerName " + sys.argv[2] + ".kensakuapp.com\\n</VirtualHost>\" /opt/lampp/etc/extra/httpd-vhosts.conf")
     cf["config"]["kensakuapp"] = sys.argv[2]
     out = open("hizilla.yaml", 'w')
     yaml.dump(cf,out,default_flow_style=False)
     out.close()
-    print("Successfully linked! Please run: kensaku add-local-domain " + sys.argv[2] + ".kensakuapp.com")
-
+    ## UPDATE (4/8/14): Dynamic DNS added so this is no longer needed ##
+    #print("Successfully linked! Please run: kensaku add-local-domain " + sys.argv[2] + ".kensakuapp.com")
+    print("Successfully linked!")
 elif sys.argv[1] == "sync":
   # Start Troubleshoting
   if not os.path.exists("hizilla.yaml"):
@@ -132,11 +156,11 @@ elif sys.argv[1] == "sync":
     print("Checking if server is empty...")
     if os.listdir(kapath):
       print("Server is not empty! Removing all the contents...")
-      os.system("rm -R " + kapath + "/*")
+      os.system("rm -Rf " + kapath + "/*")
     else:
       print("The server is empty!")
     print("Copying files...")
-    os.system("cp -R . " + kapath)
+    os.system("cp -R ./. " + kapath)
     print("Synced!")
 
 elif sys.argv[1] == "syncback":
@@ -160,9 +184,9 @@ elif sys.argv[1] == "syncback":
   if cmp_dirs(".", kapath):
     print("The app is already synced.")
   else:
-    os.system("rm -R ./*")
+    os.system("rm -Rf ./*")
     print("Copying files...")
-    os.system("cp -R " + kapath + "/* .")
+    os.system("cp -R " + kapath + "/. .")
     print("Synced!")
 
 elif sys.argv[1] == "add-custom-domain":
@@ -191,13 +215,13 @@ elif sys.argv[1] == "add-custom-domain":
     
 else:
   print("Commands for Hizilla: ")
-  print("hizilla bootstrap\tCreates a default Hifile and other config files.")
-  print("hizilla test\tRuns the test specified in the Hifile.")
-  print("hizilla instance\tCreates a new insteance inside the ~/kensaku directory.")
-  print("hizilla link [kensakuapp-name]\tLinks the instance to a KensakuApp KC2 cloud.")
-  print("hizilla sync\tSyncs the contents in the instance to the linked KensakuApp.")
-  print("hizilla syncback\tSyncs the contents in the linked KensakuApp to the current folder.")
-  print("hizilla add-custom-domain [my.domain.com]\tAdds a custom domain to the linked KensakuApp.")
+  print("hizilla bootstrap\t\tCreates a default Hifile and other config files.")
+  print("hizilla run\t\t\tRuns the Hifile script in the linked KensakuApp.")
+  print("hizilla instance\t\tCreates a new insteance inside the ~/kensaku directory.")
+  print("hizilla link\t\t\tLinks the instance to a KensakuApp KC2 cloud.")
+  print("hizilla sync\t\t\tSyncs the contents in the instance to the linked KensakuApp.")
+  print("hizilla syncback\t\tSyncs the contents in the linked KensakuApp to the current folder.")
+  print("hizilla add-custom-domain\tAdds a custom domain to the linked KensakuApp.")
 
 
 
