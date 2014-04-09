@@ -153,12 +153,12 @@ elif sys.argv[1] == "sync":
   else:
     # Copy
     print("Attempting to sync...")
-    print("Checking if server is empty...")
-    if os.listdir(kapath):
-      print("Server is not empty! Removing all the contents...")
-      os.system("rm -Rf " + kapath + "/*")
-    else:
-      print("The server is empty!")
+    #print("Checking if server is empty...")
+    #if os.listdir(kapath):
+    #  print("Server is not empty! Removing all the contents...")
+    #  os.system("rm -Rf " + kapath + "/*")
+    #else:
+    #  print("The server is empty!")
     print("Copying files...")
     os.system("cp -R ./. " + kapath)
     print("Synced!")
@@ -184,7 +184,7 @@ elif sys.argv[1] == "syncback":
   if cmp_dirs(".", kapath):
     print("The app is already synced.")
   else:
-    os.system("rm -Rf ./*")
+    #os.system("rm -Rf *")
     print("Copying files...")
     os.system("cp -R " + kapath + "/. .")
     print("Synced!")
